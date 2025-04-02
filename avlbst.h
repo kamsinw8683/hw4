@@ -150,54 +150,57 @@ template<class Key, class Value>
 void AVLTree<Key, Value>::insert (const std::pair<const Key, Value> &new_item)
 {
     // TODO
+    // Create a new AVLNode.
     AVLNode<Key, Value>* newNode = new AVLNode<Key, Value>(new_item.first, new_item.second, nullptr);
-    
-    // If the tree is empty, simply set root_.
-    if (this->root_ == nullptr) {
+    if(this->root_ == nullptr) {
         this->root_ = newNode;
         return;
     }
     
-    AVLNode<Key, Value>* current = static_cast<AVLNode<Key, Value>*>(this->root_);
+    // Perform standard BST insertion.
     AVLNode<Key, Value>* parent = nullptr;
-    while (current != nullptr) {
+    AVLNode<Key, Value>* current = static_cast<AVLNode<Key, Value>*>(this->root_);
+    while(current != nullptr) {
         parent = current;
-        if (new_item.first < current->getKey())
+        if(new_item.first < current->getKey())
             current = current->getLeft();
-        else if (new_item.first > current->getKey())
+        else if(new_item.first > current->getKey())
             current = current->getRight();
         else {
-            // Key already exists; overwrite the value.
+            // Key already exists: update the value and clean up.
             current->setValue(new_item.second);
             delete newNode;
             return;
         }
     }
     newNode->setParent(parent);
-    if (new_item.first < parent->getKey())
+    if(new_item.first < parent->getKey())
         parent->setLeft(newNode);
     else
         parent->setRight(newNode);
     
-    // After insertion, update balance factors up the tree.
+    // Propagate balance updates upward.
     AVLNode<Key, Value>* child = newNode;
     current = parent;
-    while (current != nullptr) {
-        if (child == current->getLeft())
+    while(current != nullptr) {
+        if(child == current->getLeft())
             current->updateBalance(-1);
         else
             current->updateBalance(1);
         
-        // If balance becomes 0, the height hasn't changed; stop.
-        if (current->getBalance() == 0)
+        // If the balance factor becomes 0, the subtree’s height hasn’t increased.
+        if(current->getBalance() == 0)
             break;
-        // If the node is unbalanced, rebalance it.
-        if (current->getBalance() == -2 || current->getBalance() == 2) {
+        
+        // If the balance factor is now 2 or -2, rebalance the node.
+        if(std::abs(current->getBalance()) == 2) {
             rebalance(current);
             break;
         }
+        
         child = current;
         current = current->getParent();
+    
     }
 }
 
@@ -209,54 +212,55 @@ template<class Key, class Value>
 void AVLTree<Key, Value>:: remove(const Key& key)
 {
     // TODO
-     // Find the node to remove (cast to AVLNode).
-     AVLNode<Key, Value>* nodeToRemove = static_cast<AVLNode<Key, Value>*>(this->internalFind(key));
-     if (nodeToRemove == nullptr){
-         return;  // Key not found.
-     }
-     
-     AVLNode<Key, Value>* parent = nodeToRemove->getParent();
-     
-     // If node has two children, swap with its predecessor.
-     if (nodeToRemove->getLeft() != nullptr && nodeToRemove->getRight() != nullptr) {
+    // Find the node to remove.
+    AVLNode<Key, Value>* nodeToRemove = static_cast<AVLNode<Key, Value>*>(this->internalFind(key));
+    if (nodeToRemove == nullptr)
+        return;  // Key not found.
+    
+    AVLNode<Key, Value>* parent = nodeToRemove->getParent();
+    
+    // If the node has two children, swap it with its predecessor.
+    if (nodeToRemove->getLeft() != nullptr && nodeToRemove->getRight() != nullptr) {
         AVLNode<Key, Value>* pred = static_cast<AVLNode<Key, Value>*>(this->predecessor(nodeToRemove));
+        // Use the provided base class nodeSwap (which swaps pointers, not just key/value).
         this->nodeSwap(nodeToRemove, pred);
+        // After swapping, update the parent pointer.
         parent = nodeToRemove->getParent();
-     }
-     
-     // Now nodeToRemove has at most one child.
-     AVLNode<Key, Value>* child = (nodeToRemove->getLeft() != nullptr) ? nodeToRemove->getLeft() : nodeToRemove->getRight();
-     if (child != nullptr){
+    }
+    
+    // Now nodeToRemove has at most one child.
+    AVLNode<Key, Value>* child = (nodeToRemove->getLeft() != nullptr) ? nodeToRemove->getLeft() : nodeToRemove->getRight();
+    if(child != nullptr)
         child->setParent(parent);
-     }
-     
-     if (parent == nullptr) {
+    
+    if(parent == nullptr) {
         // Removing the root.
         this->root_ = child;
-     }
-     else if (nodeToRemove == parent->getLeft()) {
-         parent->setLeft(child);
-         parent->updateBalance(1);  // Removal from left increases parent's balance.
-     }
-     else {
-         parent->setRight(child);
-         parent->updateBalance(-1); // Removal from right decreases parent's balance.
-     }
-     
-     delete nodeToRemove;
-     
-     // Propagate balance updates upward.
-     AVLNode<Key, Value>* current = parent;
-     while (current != nullptr) {
-         int bal = current->getBalance();
-         if (bal == 2 || bal == -2)
-             rebalance(current);
-         
-         // If after rebalancing the balance factor is non-zero, stop propagation.
-         if (current->getBalance() != 0)
-             break;
-         current = current->getParent();
-     }
+        delete nodeToRemove;
+        return;
+    }
+    else if(nodeToRemove == parent->getLeft()) {
+        parent->setLeft(child);
+        parent->updateBalance(1);  // Removal from the left increases parent's balance.
+    }
+    else {
+        parent->setRight(child);
+        parent->updateBalance(-1); // Removal from the right decreases parent's balance.
+    }
+    
+    delete nodeToRemove;
+    
+    // Propagate balance updates upward.
+    AVLNode<Key, Value>* current = parent;
+    while(current != nullptr) {
+        // If the absolute balance factor is 1, the height didn't change; stop.
+        if(std::abs(current->getBalance()) == 1)
+            break;
+        else if(std::abs(current->getBalance()) == 2)
+            rebalance(current);
+        
+        current = current->getParent();
+    }
 }
 template<class Key, class Value>
 void AVLTree<Key, Value>::rotateLeft(AVLNode<Key, Value>* node)
