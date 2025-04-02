@@ -131,11 +131,10 @@ template <class Key, class Value>
 class AVLTree : public BinarySearchTree<Key, Value>
 {
 public:
-    virtual void insert (const std::pair<const Key, Value> &new_item); // TODO
-    virtual void remove(const Key& key);  // TODO
+    virtual void insert (const std::pair<const Key, Value> &new_item) override; // TODO
+    virtual void remove(const Key& key) override;  // TODO
 protected:
-    virtual void nodeSwap( AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n2);
-
+    virtual void nodeSwap(Node<Key,Value>* n1, Node<Key,Value>* n2) override;
     // Add helper functions here
     void rotateLeft(AVLNode<Key, Value>* node);
     void rotateRight(AVLNode<Key, Value>* node);
@@ -326,12 +325,18 @@ void AVLTree<Key, Value>::rebalance(AVLNode<Key, Value>* node)
 }
 
 template<class Key, class Value>
-void AVLTree<Key, Value>::nodeSwap( AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n2)
+void AVLTree<Key, Value>::nodeSwap(Node<Key,Value>* n1, Node<Key,Value>* n2)
 {
+    // First, call the base class version to swap the Node parts.
     BinarySearchTree<Key, Value>::nodeSwap(n1, n2);
-    int8_t tempB = n1->getBalance();
-    n1->setBalance(n2->getBalance());
-    n2->setBalance(tempB);
+    
+    // Then, cast to AVLNode pointers to swap the AVL-specific balance.
+    AVLNode<Key, Value>* avl1 = static_cast<AVLNode<Key, Value>*>(n1);
+    AVLNode<Key, Value>* avl2 = static_cast<AVLNode<Key, Value>*>(n2);
+    
+    int8_t tempB = avl1->getBalance();
+    avl1->setBalance(avl2->getBalance());
+    avl2->setBalance(tempB);
 }
 
 
