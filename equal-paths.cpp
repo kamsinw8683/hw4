@@ -10,7 +10,7 @@ using namespace std;
 // You may add any prototypes of helper functions here
 
 
-bool dfs(Node* root, int depth, int &leafDepth) {
+bool dfs(Node* root, int depth, int &leafDepth) {//dfs variant
     if (!root) return true; 
 
     if (!root->left && !root->right) {
