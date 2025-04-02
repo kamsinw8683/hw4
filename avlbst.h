@@ -220,9 +220,9 @@ void AVLTree<Key, Value>:: remove(const Key& key)
      
      // If node has two children, swap with its predecessor.
      if (nodeToRemove->getLeft() != nullptr && nodeToRemove->getRight() != nullptr) {
-         AVLNode<Key, Value>* pred = static_cast<AVLNode<Key, Value>*>(predecessor(nodeToRemove));
-         this->nodeSwap(nodeToRemove, pred);
-         parent = nodeToRemove->getParent();
+        AVLNode<Key, Value>* pred = static_cast<AVLNode<Key, Value>*>(this->predecessor(nodeToRemove));
+        this->nodeSwap(nodeToRemove, pred);
+        parent = nodeToRemove->getParent();
      }
      
      // Now nodeToRemove has at most one child.
