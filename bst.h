@@ -5,6 +5,8 @@
 #include <exception>
 #include <cstdlib>
 #include <utility>
+#include <algorithm>   // for std::max
+#include <cmath>       // for std::abs
 
 /**
  * A templated class for a Node in a search tree.
@@ -247,6 +249,7 @@ protected:
     virtual void nodeSwap( Node<Key,Value>* n1, Node<Key,Value>* n2) ;
 
     // Add helper functions here
+    int checkBalance(Node<Key, Value>* node) const;// Returns the height of the subtree if balanced,or -1 if the subtree is unbalanced.
 
 
 protected:
@@ -267,6 +270,7 @@ template<class Key, class Value>
 BinarySearchTree<Key, Value>::iterator::iterator(Node<Key,Value> *ptr)
 {
     // TODO
+    current_ = ptr;
 }
 
 /**
@@ -275,6 +279,7 @@ BinarySearchTree<Key, Value>::iterator::iterator(Node<Key,Value> *ptr)
 template<class Key, class Value>
 BinarySearchTree<Key, Value>::iterator::iterator() 
 {
+    current_ = nullptr;
     // TODO
 
 }
@@ -376,7 +381,7 @@ Begin implementations for the BinarySearchTree class.
 * Default constructor for a BinarySearchTree, which sets the root to NULL.
 */
 template<class Key, class Value>
-BinarySearchTree<Key, Value>::BinarySearchTree() : root(nullptr)
+BinarySearchTree<Key, Value>::BinarySearchTree() : root_(nullptr)
 {
     // TODO
 }
@@ -511,8 +516,9 @@ void BinarySearchTree<Key, Value>::remove(const Key& key)
 
     if (nodeToRemove->getLeft() != nullptr && nodeToRemove->getRight() != nullptr) {
         // Node has two children, swap with predecessor
-        Node<Key, Value>* predecessor = getSmallestNode(nodeToRemove->getLeft());
-        nodeSwap(nodeToRemove, predecessor);
+        Node<Key, Value>* pred = predecessor(nodeToRemove);
+        nodeSwap(nodeToRemove, pred);
+        
     }
 
     Node<Key, Value>* child;
@@ -543,21 +549,22 @@ Node<Key, Value>*
 BinarySearchTree<Key, Value>::predecessor(Node<Key, Value>* current)
 {
     // TODO
-    if(current->getLeft() != nullptr){
-        current = current->getLeft();
-        while(current->getRight() !=nullptr){
-            current = current->getRight();
+    if (current == nullptr) return nullptr;
+    if (current->getLeft() != nullptr) {
+        Node<Key, Value>* temp = current->getLeft();
+        while (temp->getRight() != nullptr) {
+            temp = temp->getRight();
         }
-        return current;
-    }else{
-        while(current->getParent() != nullptr)
-        {
-            if(current->getRight !=nullptr){
-                return current;
-            }
+        return temp;
+    } else {
+        Node<Key, Value>* temp = current;
+        Node<Key, Value>* parent = current->getParent();
+        while (parent != nullptr && temp == parent->getLeft()) {
+            temp = parent;
+            parent = parent->getParent();
         }
+        return parent;
     }
-    return nullptr;
     
 }
 
@@ -600,6 +607,16 @@ template<typename Key, typename Value>
 Node<Key, Value>* BinarySearchTree<Key, Value>::internalFind(const Key& key) const
 {
     // TODO
+    Node<Key, Value>* current = root_;
+    while (current != nullptr) {
+        if (key == current->getKey())
+            return current;
+        else if (key < current->getKey())
+            current = current->getLeft();
+        else
+            current = current->getRight();
+    }
+    return nullptr;
 }
 
 /**
@@ -609,9 +626,27 @@ template<typename Key, typename Value>
 bool BinarySearchTree<Key, Value>::isBalanced() const
 {
     // TODO
+    return checkBalance(root_) != -1;
 }
 
+template<typename Key, typename Value>
+int BinarySearchTree<Key, Value>::checkBalance(Node<Key, Value>* node) const {
+    if (node == nullptr)
+        return 0;
 
+    int leftHeight = checkBalance(node->getLeft());
+    if (leftHeight == -1)
+        return -1; // Left subtree is unbalanced
+
+    int rightHeight = checkBalance(node->getRight());
+    if (rightHeight == -1)
+        return -1; // Right subtree is unbalanced
+
+    if (std::abs(leftHeight - rightHeight) > 1)
+        return -1; // Current node is unbalanced
+
+    return 1 + std::max(leftHeight, rightHeight);
+}
 
 template<typename Key, typename Value>
 void BinarySearchTree<Key, Value>::nodeSwap( Node<Key,Value>* n1, Node<Key,Value>* n2)
